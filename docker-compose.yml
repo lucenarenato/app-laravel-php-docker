@@ -1,0 +1,57 @@
+# I use ENV variables to name my containers and set the ports
+# to change, replate it here or in .env file
+version: '3'
+services:
+#---------------------------------------------
+# NGINX Container
+#---------------------------------------------
+  php-fpm:
+    container_name: php-fpm
+    image: petronetto/php7-alpine
+    restart: always
+    environment:
+      XDEBUG_ENABLE: 1
+      XDEBUG_HOST: ${DEBUG_HOST}
+      XDEBUG_REMOTE_PORT: 9000
+      NEWRELIC_ENABLED: 0
+      NEWRELIC_LICENSE: ""
+    volumes:
+     - ./app:/app
+    links:
+     - database
+     - redis
+#---------------------------------------------
+# Web Server Container
+#---------------------------------------------
+  webserver:
+    container_name: webserver
+    # build: ./nginx
+    build: ./caddy
+    links:
+      - php-fpm
+    volumes:
+      - ./app:/app
+    ports:
+      - 8080:8080
+#---------------------------------------------
+# Database Container
+#---------------------------------------------
+  database:
+    container_name: database
+    restart: always
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: homestead
+      POSTGRES_USER: homestead
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - ./database:/var/lib/postgresql
+#---------------------------------------------
+# Caddy Container
+#---------------------------------------------
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: always
